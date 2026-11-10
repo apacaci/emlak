@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "İlanYaz Deneme",
+    "slug": "ilanyaz",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ilanyaz.deneme"
+    },
+    "android": {
+      "package": "com.ilanyaz.deneme",
+      "adaptiveIcon": {
+        "backgroundColor": "#E3F1EB",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "İlanlarına fotoğraf ekleyebilmen için galerine erişim gerekir.",
+          "cameraPermission": "İlan fotoğrafı çekebilmen için kamera izni gerekir.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-sharing"
+    ]
+  }
+}
