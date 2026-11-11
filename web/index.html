@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="tr" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İlanYaz Web Denemesi</title>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column (max 680px), phone first; views switch on the URL hash. Single light theme by choice. */
+:root {
+  color-scheme: light;
+  --ground: #F4F6F3;
+  --card: #FFFFFF;
+  --ink: #14201B;
+  --muted: #56635C;
+  --line: #DDE3DE;
+  --accent: #0F6B4F;
+  --accent-dark: #0A4F3A;
+  --tint: #E3F1EB;
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --bs-body-bg: var(--ground);
+  --bs-body-color: var(--ink);
+  --bs-body-font-family: var(--font-body);
+  --bs-primary: var(--accent);
+  --bs-primary-rgb: 15, 107, 79;
+  --bs-secondary-color: var(--muted);
+  --bs-border-color: var(--line);
+  --bs-link-color: var(--accent);
+  --bs-link-color-rgb: 15, 107, 79;
+  --bs-link-hover-color: var(--accent-dark);
+  --bs-link-hover-color-rgb: 10, 79, 58;
+  --bs-focus-ring-color: rgba(15, 107, 79, 0.3);
+}
+html, body { height: 100%; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); }
+h1, h2, .navbar-brand { font-family: var(--font-display); text-wrap: balance; }
+h1 { font-size: 1.75rem; font-weight: 700; }
+h2 { font-size: 0.8125rem; font-family: var(--font-body); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.page { max-width: 680px; }
+.view { display: none; }
+.view.active { display: flex; flex-direction: column; gap: 1rem; }
+.navbar { background: var(--card); border-bottom: 1px solid var(--line); }
+.nav-link { min-height: 44px; display: flex; align-items: center; color: var(--muted); font-weight: 500; }
+.nav-link.active { color: var(--accent); font-weight: 600; }
+.btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; }
+.btn-primary {
+  --bs-btn-bg: var(--accent); --bs-btn-border-color: var(--accent);
+  --bs-btn-hover-bg: var(--accent-dark); --bs-btn-hover-border-color: var(--accent-dark);
+  --bs-btn-active-bg: var(--accent-dark); --bs-btn-active-border-color: var(--accent-dark);
+  --bs-btn-disabled-bg: var(--accent); --bs-btn-disabled-border-color: var(--accent);
+}
+.btn-outline-secondary {
+  --bs-btn-color: var(--ink); --bs-btn-border-color: #A9B5AD; --bs-btn-bg: var(--card);
+  --bs-btn-hover-bg: var(--tint); --bs-btn-hover-color: var(--ink); --bs-btn-hover-border-color: #A9B5AD;
+  --bs-btn-active-bg: var(--tint); --bs-btn-active-color: var(--ink); --bs-btn-active-border-color: var(--accent);
+}
+.btn-check:checked + .btn-outline-secondary { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
+.form-control, .form-select { min-height: 48px; border-color: #A9B5AD; }
+.form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 0.25rem rgba(15, 107, 79, 0.2); }
+.form-label { font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+.card { border-color: var(--line); border-radius: 1rem; }
+.task {
+  display: flex; align-items: center; gap: 0.75rem; min-height: 64px; padding: 0.75rem 0.875rem;
+  background: var(--card); border: 1px solid var(--line); border-radius: 0.875rem;
+  color: var(--ink); text-decoration: none; text-align: left; width: 100%;
+}
+a.task:hover, button.task:hover:not(:disabled) { border-color: var(--accent); color: var(--ink); }
+.task:disabled { opacity: 0.6; }
+.task-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--tint); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.task-title { font-weight: 600; }
+.task-sub { font-size: 0.8125rem; color: var(--muted); }
+.dest-badge { width: 36px; height: 36px; border-radius: 18px; background: var(--tint); color: var(--accent-dark); font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dest-badge.site { border-radius: 10px; background: #E6EAE6; color: var(--ink); }
+.photos { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.photo { position: relative; width: 72px; height: 72px; }
+.photo img { width: 72px; height: 72px; object-fit: cover; border-radius: 12px; max-width: 100%; }
+.photo button { position: absolute; top: -8px; right: -8px; width: 28px; height: 28px; border-radius: 14px; border: 2px solid var(--card); background: var(--ink); color: #FFFFFF; display: flex; align-items: center; justify-content: center; padding: 0; }
+.photo-add { width: 72px; height: 72px; border-radius: 12px; border: 1px dashed var(--accent); background: var(--card); color: var(--accent); font-size: 0.75rem; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
+.photo-add:focus-within { outline: 3px solid rgba(15, 107, 79, 0.35); }
+#draftText { min-height: 300px; line-height: 1.55; }
+.progress { height: 8px; background: var(--tint); }
+.progress-bar { background: var(--accent); }
+.small-note { font-size: 0.8125rem; color: var(--muted); }
+.copy-row { display: flex; align-items: center; gap: 0.75rem; border-top: 1px solid var(--line); padding-top: 0.5rem; }
+.copy-value { font-size: 0.875rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.min-w-0 { min-width: 0; }
+.demo-flag { font-size: 0.75rem; font-weight: 600; color: var(--accent-dark); background: var(--tint); border-radius: 999px; padding: 0.2rem 0.6rem; }
+:focus-visible { outline: 3px solid rgba(15, 107, 79, 0.45); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<nav class="navbar sticky-top" aria-label="Ana menü">
+  <div class="container page d-flex align-items-center justify-content-between gap-2 flex-wrap">
+    <a class="navbar-brand fw-bold m-0 d-flex align-items-center gap-2" href="#ana-sayfa">İlanYaz <span class="demo-flag">Deneme</span></a>
+    <div class="d-flex gap-3">
+      <a class="nav-link p-0" id="navHome" href="#ana-sayfa">Ana sayfa</a>
+      <a class="nav-link p-0" id="navAccount" href="#hesap">Hesap</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container page py-4">
+
+  <!-- Ana sayfa -->
+  <section class="view" id="view-ana-sayfa" aria-labelledby="homeTitle">
+    <h1 id="homeTitle" class="m-0">Bugün ne yazalım?</h1>
+    <h2 class="mt-2">Hazır işler</h2>
+    <a class="task" href="#ilan-formu">
+      <span class="task-icon"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path><path d="M10 20v-6h4v6"></path></svg></span>
+      <span class="flex-grow-1"><span class="task-title d-block">İlan metni yaz</span><span class="task-sub">Satılık ya da kiralık, ilan sitesine hazır</span></span>
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#56635C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+    </a>
+    <button type="button" class="task" disabled>
+      <span class="task-icon"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"></rect><circle cx="12" cy="12" r="3.5"></circle></svg></span>
+      <span class="flex-grow-1"><span class="task-title d-block">Instagram gönderisi</span><span class="task-sub">Yakında</span></span>
+    </button>
+    <button type="button" class="task" disabled>
+      <span class="task-icon"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"></path></svg></span>
+      <span class="flex-grow-1"><span class="task-title d-block">Müşteriye takip mesajı</span><span class="task-sub">Yakında</span></span>
+    </button>
+    <button type="button" class="task" disabled>
+      <span class="task-icon"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l6 6 4-4 6 6"></path><path d="M20 10v5h-5"></path></svg></span>
+      <span class="flex-grow-1"><span class="task-title d-block">Fiyat düşüşü duyurusu</span><span class="task-sub">Yakında</span></span>
+    </button>
+    <h2 class="mt-2">Şablonlarım</h2>
+    <p class="small-note border rounded-4 p-3 m-0" style="border-style: dashed !important">Kendi şablonlarını kaydetme özelliği sonraki adımda gelecek.</p>
+  </section>
+
+  <!-- İlan formu -->
+  <section class="view" id="view-ilan-formu" aria-labelledby="formTitle">
+    <div class="d-flex align-items-center gap-2">
+      <a class="btn btn-outline-secondary px-2" href="#ana-sayfa" aria-label="Ana sayfaya dön"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg></a>
+      <h1 id="formTitle" class="m-0">İlan metni yaz</h1>
+    </div>
+    <form id="listingForm" class="d-flex flex-column gap-3" novalidate>
+      <div class="btn-group w-100" role="group" aria-label="İlan türü">
+        <input type="radio" class="btn-check" name="type" id="typeSale" value="Satılık" checked>
+        <label class="btn btn-outline-secondary" for="typeSale">Satılık</label>
+        <input type="radio" class="btn-check" name="type" id="typeRent" value="Kiralık">
+        <label class="btn btn-outline-secondary" for="typeRent">Kiralık</label>
+      </div>
+      <div>
+        <label class="form-label" for="fLocation">Konum</label>
+        <input class="form-control" id="fLocation" type="text" placeholder="Örn. Kadıköy, Moda" required>
+        <div class="invalid-feedback">Konumu yaz, örneğin ilçe ve mahalle.</div>
+      </div>
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label" for="fRooms">Oda sayısı</label>
+          <input class="form-control" id="fRooms" type="text" placeholder="3+1" required>
+          <div class="invalid-feedback">Oda sayısını yaz.</div>
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="fSize">Metrekare</label>
+          <input class="form-control" id="fSize" type="text" inputmode="numeric" placeholder="135" required>
+          <div class="invalid-feedback">Metrekareyi yaz.</div>
+        </div>
+      </div>
+      <div>
+        <label class="form-label" for="fPrice">Fiyat (isteğe bağlı)</label>
+        <input class="form-control" id="fPrice" type="text" placeholder="Örn. 8.500.000 TL">
+      </div>
+      <div>
+        <label class="form-label" for="fFeatures">Öne çıkan özellikler (virgülle ayır)</label>
+        <textarea class="form-control" id="fFeatures" rows="2" placeholder="Sahile yakın, güney cephe, asansörlü"></textarea>
+      </div>
+      <div>
+        <div class="form-label" id="photoLabel">Fotoğraflar (<span id="photoCount">0</span>)</div>
+        <div class="photos" id="photoList" role="group" aria-labelledby="photoLabel">
+          <label class="photo-add" for="fPhotos">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+            Ekle
+            <input class="visually-hidden" id="fPhotos" type="file" accept="image/*" multiple>
+          </label>
+        </div>
+        <div class="small-note mt-1">Telefonda kamera ya da galeri seçeneği çıkar. En fazla 10 fotoğraf.</div>
+      </div>
+      <div>
+        <div class="form-label" id="toneLabel">Üslup</div>
+        <div class="d-flex gap-2" role="group" aria-labelledby="toneLabel">
+          <input type="radio" class="btn-check" name="tone" id="toneFormal" value="Kurumsal">
+          <label class="btn btn-outline-secondary rounded-pill flex-fill" for="toneFormal">Kurumsal</label>
+          <input type="radio" class="btn-check" name="tone" id="toneWarm" value="Samimi" checked>
+          <label class="btn btn-outline-secondary rounded-pill flex-fill" for="toneWarm">Samimi</label>
+          <input type="radio" class="btn-check" name="tone" id="toneShort" value="Kısa ve net">
+          <label class="btn btn-outline-secondary rounded-pill flex-fill" for="toneShort">Kısa ve net</label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg">Metni oluştur</button>
+      <div class="small-note text-center">Bu işlem 1 metin hakkını kullanır</div>
+    </form>
+  </section>
+
+  <!-- Taslak -->
+  <section class="view" id="view-taslak" aria-labelledby="draftTitle">
+    <div class="d-flex align-items-center gap-2">
+      <a class="btn btn-outline-secondary px-2" href="#ilan-formu" aria-label="Forma dön"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg></a>
+      <h1 id="draftTitle" class="m-0">Taslağın hazır</h1>
+    </div>
+    <div class="small-note" id="draftMeta"></div>
+    <div class="photos" id="draftPhotos" aria-label="Eklenen fotoğraflar"></div>
+    <div>
+      <label class="form-label" for="draftText">Taslak metin (üzerinde düzenleyebilirsin)</label>
+      <textarea class="form-control" id="draftText"></textarea>
+      <div class="small-note mt-1">Deneme sürümü: bu metin yapay zekâdan değil, hazır şablondan üretildi.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-secondary flex-fill" id="btnCopy">Kopyala</button>
+      <button type="button" class="btn btn-outline-secondary flex-fill" id="btnRegen">Yeniden yaz</button>
+    </div>
+    <div class="card">
+      <div class="card-body d-flex flex-column gap-2">
+        <div class="fw-semibold">İlan sitesi için alan alan kopyala</div>
+        <div class="small-note">İlan formundaki her kutuya ayrı ayrı yapıştırabilirsin.</div>
+        <div class="copy-row">
+          <div class="flex-grow-1 min-w-0"><div class="form-label m-0">Başlık</div><div class="copy-value" id="partTitle"></div></div>
+          <button type="button" class="btn btn-outline-secondary" id="btnCopyTitle">Kopyala</button>
+        </div>
+        <div class="copy-row">
+          <div class="flex-grow-1 min-w-0"><div class="form-label m-0">Açıklama</div><div class="copy-value" id="partBody"></div></div>
+          <button type="button" class="btn btn-outline-secondary" id="btnCopyBody">Kopyala</button>
+        </div>
+        <div class="copy-row" id="partPriceRow">
+          <div class="flex-grow-1 min-w-0"><div class="form-label m-0">Fiyat</div><div class="copy-value" id="partPrice"></div></div>
+          <button type="button" class="btn btn-outline-secondary" id="btnCopyPrice">Kopyala</button>
+        </div>
+      </div>
+    </div>
+    <h2 class="mt-2">Sosyal medya</h2>
+    <div class="d-flex flex-column gap-2" id="destSocial"></div>
+    <h2 class="mt-2">İlan siteleri</h2>
+    <div class="d-flex flex-column gap-2" id="destSites"></div>
+    <div class="small-note text-center">Hiçbir şey sen onaylamadan gönderilmez.</div>
+  </section>
+
+  <!-- Hesap -->
+  <section class="view" id="view-hesap" aria-labelledby="accountTitle">
+    <h1 id="accountTitle" class="m-0">Hesap</h1>
+    <div class="card">
+      <div class="card-body d-flex flex-column gap-2">
+        <div class="d-flex justify-content-between align-items-baseline gap-2 flex-wrap">
+          <span class="fw-semibold">Bu ayki hakkın</span>
+          <span class="small-note" style="font-variant-numeric: tabular-nums"><span id="quotaLeft">150</span> / 150 metin</span>
+        </div>
+        <div class="progress" role="progressbar" aria-label="Kalan metin hakkı" aria-valuemin="0" aria-valuemax="150" aria-valuenow="150" id="quotaBarWrap">
+          <div class="progress-bar" id="quotaBar" style="width: 100%"></div>
+        </div>
+        <div class="small-note">Deneme sürümünde sayaç yalnızca bu tarayıcıda tutulur.</div>
+        <button type="button" class="btn btn-outline-secondary align-self-start" id="btnResetQuota">Sayacı sıfırla</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="fw-semibold">Planlar</div>
+        <div class="small-note mb-2">Ödeme bu denemede çalışmaz, fiyatlar bilgi içindir.</div>
+        <div class="d-flex justify-content-between border-top py-2"><span>Yıllık <span class="demo-flag">%33 tasarruf</span></span><span class="fw-semibold">39,99 $</span></div>
+        <div class="d-flex justify-content-between border-top py-2"><span>Aylık</span><span class="fw-semibold">4,99 $</span></div>
+        <div class="small-note border-top pt-2">Her iki planda ayda 150 metin. Ücretsiz kullanımda toplam 5 metin.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Onay penceresi -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-4" id="confirmTitle">Gönderilsin mi?</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body d-flex flex-column gap-3">
+        <p class="m-0" id="confirmBody"></p>
+        <div class="border rounded-3 p-3" style="background: var(--ground)">
+          <div class="photos mb-2" id="confirmPhotos"></div>
+          <div id="confirmPreview" style="white-space: pre-line; max-height: 8.5em; overflow: auto"></div>
+        </div>
+      </div>
+      <div class="modal-footer flex-column align-items-stretch">
+        <a class="btn btn-primary btn-lg" id="confirmGo" href="#" target="_blank" rel="noopener">Evet, kopyala ve aç</a>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
+  <div class="toast align-items-center text-bg-dark border-0" id="toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="3500">
+    <div class="d-flex">
+      <div class="toast-body" id="toastBody"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Kapat"></button>
+    </div>
+  </div>
+</div>
+
+<script src="js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var QUOTA = 150;
+  var MAX_PHOTOS = 10;
+  var VIEWS = ['ana-sayfa', 'ilan-formu', 'taslak', 'hesap'];
+
+  var DESTS = [
+    { id: 'instagram', name: 'Instagram', kind: 'social', hint: 'Metin kopyalanır, Instagram açılır', url: 'https://www.instagram.com/' },
+    { id: 'whatsapp', name: 'WhatsApp', kind: 'social', hint: 'Metin WhatsApp mesajına hazır gelir', url: null },
+    { id: 'facebook', name: 'Facebook', kind: 'social', hint: 'Metin kopyalanır, Facebook açılır', url: 'https://www.facebook.com/' },
+    { id: 'sahibinden', name: 'sahibinden.com', kind: 'site', hint: 'Açıklama kopyalanır, site açılır', url: 'https://www.sahibinden.com/' },
+    { id: 'hepsiemlak', name: 'Hepsiemlak', kind: 'site', hint: 'Açıklama kopyalanır, site açılır', url: 'https://www.hepsiemlak.com/' },
+    { id: 'emlakjet', name: 'Emlakjet', kind: 'site', hint: 'Açıklama kopyalanır, site açılır', url: 'https://www.emlakjet.com/' }
+  ];
+
+  var OPENINGS = {
+    'Kurumsal': [
+      '{loc} bölgesinde yer alan {size} m² {rooms} dairemiz {typeLower} olarak portföyümüze eklenmiştir.',
+      '{loc} konumunda, {size} m² kullanım alanına sahip {rooms} daire {typeLower} olarak sunulmaktadır.'
+    ],
+    'Samimi': [
+      '{loc} bölgesinde, içine girer girmez "burası" diyeceğiniz {size} m² {rooms} dairemiz {typeLower}.',
+      '{loc} tarafında ev bakanlara güzel haber: {size} m² {rooms} dairemiz {typeLower}.'
+    ],
+    'Kısa ve net': ['{loc}, {rooms}, {size} m², {typeLower} daire.', '{typeUpper} {rooms} daire. {loc}, {size} m².']
+  };
+  var CLOSINGS = {
+    'Kurumsal': ['Detaylı bilgi ve randevu için ofisimizle iletişime geçebilirsiniz.', 'Yerinde görmek için randevu talebinizi bekliyoruz.'],
+    'Samimi': ['Yerinde görmek için bizi arayın, size uygun bir saatte randevu oluşturalım.', 'Fotoğraflar güzel ama yerinde görmek bambaşka. Arayın, birlikte gezelim.'],
+    'Kısa ve net': ['Bilgi ve randevu için arayın.', 'Randevu için arayın.']
+  };
+
+  var state = { form: null, photos: [], draft: '', variant: 0, used: 0, pending: null };
+
+  try {
+    var saved = parseInt(localStorage.getItem('ilanyaz-used') || '0', 10);
+    if (saved > 0 && saved <= QUOTA) state.used = saved;
+  } catch (e) { /* storage may be unavailable */ }
+
+  function $(id) { return document.getElementById(id); }
+
+  function capitalize(text) {
+    var t = text.trim();
+    return t ? t.charAt(0).toLocaleUpperCase('tr-TR') + t.slice(1) : t;
+  }
+
+  function buildListing(form, variant) {
+    var typeLower = form.type.toLocaleLowerCase('tr-TR');
+    function fill(tpl) {
+      return tpl.replace('{loc}', form.location).replace('{rooms}', form.rooms).replace('{size}', form.size)
+        .replace('{typeLower}', typeLower).replace('{typeUpper}', form.type);
+    }
+    var openings = OPENINGS[form.tone];
+    var closings = CLOSINGS[form.tone];
+    var features = form.features.split(/[,\n;]+/).map(capitalize).filter(function (f) { return f.length > 0; });
+    var lines = [capitalize(form.location + ' ' + typeLower + ' ' + form.rooms + ' daire, ' + form.size + ' m²'), '', fill(openings[variant % openings.length])];
+    if (features.length) {
+      lines.push('');
+      features.forEach(function (f) { lines.push('• ' + f); });
+    }
+    if (form.price) lines.push('', 'Fiyat: ' + form.price);
+    lines.push('', closings[variant % closings.length]);
+    return lines.join('\n');
+  }
+
+  var toast = new bootstrap.Toast($('toast'));
+  function notify(message) {
+    $('toastBody').textContent = message;
+    toast.show();
+  }
+
+  function saveUsed() {
+    try { localStorage.setItem('ilanyaz-used', String(state.used)); } catch (e) { /* ignore */ }
+  }
+
+  function renderQuota() {
+    var left = QUOTA - state.used;
+    $('quotaLeft').textContent = String(left);
+    $('quotaBar').style.width = (left / QUOTA * 100) + '%';
+    $('quotaBarWrap').setAttribute('aria-valuenow', String(left));
+  }
+
+  function photoThumb(photo, index, removable) {
+    var wrap = document.createElement('div');
+    wrap.className = 'photo';
+    var img = document.createElement('img');
+    img.src = photo.url;
+    img.alt = 'Fotoğraf ' + (index + 1);
+    wrap.appendChild(img);
+    if (removable) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Fotoğraf ' + (index + 1) + ' kaldır');
+      btn.innerHTML = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg>';
+      btn.addEventListener('click', function () {
+        URL.revokeObjectURL(photo.url);
+        state.photos.splice(state.photos.indexOf(photo), 1);
+        renderPhotos();
+      });
+      wrap.appendChild(btn);
+    }
+    return wrap;
+  }
+
+  function renderPhotos() {
+    $('photoCount').textContent = String(state.photos.length);
+    var list = $('photoList');
+    Array.prototype.slice.call(list.querySelectorAll('.photo')).forEach(function (n) { n.remove(); });
+    state.photos.forEach(function (p, i) { list.appendChild(photoThumb(p, i, true)); });
+    var dp = $('draftPhotos');
+    dp.textContent = '';
+    state.photos.forEach(function (p, i) { dp.appendChild(photoThumb(p, i, false)); });
+  }
+
+  function splitDraft(text) {
+    var lines = text.split('\n');
+    return { title: (lines[0] || '').trim(), body: lines.slice(1).join('\n').trim() };
+  }
+
+  function renderParts() {
+    var parts = splitDraft($('draftText').value);
+    $('partTitle').textContent = parts.title || 'Boş';
+    $('partBody').textContent = parts.body || 'Boş';
+    var price = state.form ? state.form.price : '';
+    $('partPrice').textContent = price;
+    $('partPriceRow').style.display = price ? '' : 'none';
+  }
+
+  function renderDraft() {
+    if (!state.form) return;
+    var f = state.form;
+    $('draftMeta').textContent = [f.type, f.location, f.rooms, f.size + ' m²', f.tone].join(' · ');
+    $('draftText').value = state.draft;
+    renderParts();
+  }
+
+  function renderDests() {
+    DESTS.forEach(function (d) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'task';
+      var badge = document.createElement('span');
+      badge.className = 'dest-badge' + (d.kind === 'site' ? ' site' : '');
+      badge.setAttribute('aria-hidden', 'true');
+      badge.textContent = d.name.charAt(0).toUpperCase();
+      var text = document.createElement('span');
+      text.className = 'flex-grow-1';
+      var title = document.createElement('span');
+      title.className = 'task-title d-block';
+      title.textContent = d.name;
+      var sub = document.createElement('span');
+      sub.className = 'task-sub';
+      sub.textContent = d.hint;
+      text.appendChild(title);
+      text.appendChild(sub);
+      btn.appendChild(badge);
+      btn.appendChild(text);
+      btn.addEventListener('click', function () { openConfirm(d); });
+      $(d.kind === 'site' ? 'destSites' : 'destSocial').appendChild(btn);
+    });
+  }
+
+  var confirmModal = new bootstrap.Modal($('confirmModal'));
+
+  function openConfirm(dest) {
+    state.draft = $('draftText').value;
+    state.pending = dest;
+    $('confirmTitle').textContent = dest.name + ' için gönderilsin mi?';
+    $('confirmBody').textContent = dest.id === 'whatsapp'
+      ? 'Onaylarsan WhatsApp açılır ve metin mesaj kutusuna hazır gelir. Kime göndereceğini orada seçersin.'
+      : dest.kind === 'site'
+        ? 'Onaylarsan açıklama metni panoya kopyalanır ve ' + dest.name + ' yeni sekmede açılır. Başlık ve fiyat için bu sayfaya dönüp kopyala düğmelerini kullanabilirsin.'
+        : 'Onaylarsan metin panoya kopyalanır ve ' + dest.name + ' yeni sekmede açılır. Metni oraya yapıştırman yeterli.';
+    $('confirmPreview').textContent = state.draft;
+    var cp = $('confirmPhotos');
+    cp.textContent = '';
+    state.photos.slice(0, 4).forEach(function (p, i) { cp.appendChild(photoThumb(p, i, false)); });
+    cp.style.display = state.photos.length ? '' : 'none';
+    $('confirmGo').href = dest.id === 'whatsapp' ? 'https://wa.me/?text=' + encodeURIComponent(state.draft) : dest.url;
+    $('confirmGo').textContent = dest.id === 'whatsapp' ? "Evet, WhatsApp'ı aç" : 'Evet, kopyala ve aç';
+    confirmModal.show();
+  }
+
+  function copyDraft(okMessage, textOverride) {
+    var text = textOverride != null ? textOverride : $('draftText').value;
+    var fail = function () {
+      $('draftText').focus();
+      $('draftText').select();
+      notify('Otomatik kopyalanamadı. Metni seçtim, elle kopyalayabilirsin.');
+    };
+    // Uygulamanın içinde (WebView) çalışıyorsa kopyalamayı uygulamaya bırak.
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'copy', text: text }));
+      notify(okMessage);
+      return;
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { notify(okMessage); }, fail);
+    } catch (e) { fail(); }
+  }
+
+  function route() {
+    var name = (location.hash || '').replace('#', '');
+    if (VIEWS.indexOf(name) === -1) name = 'ana-sayfa';
+    if (name === 'taslak' && !state.draft) name = 'ilan-formu';
+    VIEWS.forEach(function (v) { $('view-' + v).classList.toggle('active', v === name); });
+    $('navHome').classList.toggle('active', name !== 'hesap');
+    $('navAccount').classList.toggle('active', name === 'hesap');
+    if (name === 'taslak') renderDraft();
+    if (name === 'hesap') renderQuota();
+    window.scrollTo(0, 0);
+  }
+
+  function useOne() {
+    if (state.used >= QUOTA) {
+      notify('Bu ayki hakkın bitti. Hesap sayfasından sayacı sıfırlayabilirsin.');
+      return false;
+    }
+    state.used += 1;
+    saveUsed();
+    return true;
+  }
+
+  $('listingForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var required = ['fLocation', 'fRooms', 'fSize'];
+    var firstBad = null;
+    required.forEach(function (id) {
+      var el = $(id);
+      var bad = !el.value.trim();
+      el.classList.toggle('is-invalid', bad);
+      if (bad && !firstBad) firstBad = el;
+    });
+    if (firstBad) { firstBad.focus(); return; }
+    if (!useOne()) return;
+    state.form = {
+      type: document.querySelector('input[name="type"]:checked').value,
+      tone: document.querySelector('input[name="tone"]:checked').value,
+      location: $('fLocation').value.trim(),
+      rooms: $('fRooms').value.trim(),
+      size: $('fSize').value.trim(),
+      price: $('fPrice').value.trim(),
+      features: $('fFeatures').value
+    };
+    state.variant = 0;
+    state.draft = buildListing(state.form, state.variant);
+    location.hash = '#taslak';
+    route();
+  });
+
+  ['fLocation', 'fRooms', 'fSize'].forEach(function (id) {
+    $(id).addEventListener('input', function () { $(id).classList.remove('is-invalid'); });
+  });
+
+  $('fPhotos').addEventListener('change', function (ev) {
+    var files = Array.prototype.slice.call(ev.target.files || []);
+    var room = MAX_PHOTOS - state.photos.length;
+    files.filter(function (f) { return f.type.indexOf('image/') === 0; }).slice(0, room).forEach(function (f) {
+      state.photos.push({ url: URL.createObjectURL(f) });
+    });
+    if (files.length > room) notify('En fazla ' + MAX_PHOTOS + ' fotoğraf eklenebilir.');
+    ev.target.value = '';
+    renderPhotos();
+  });
+
+  $('btnCopy').addEventListener('click', function () { copyDraft('Metin panoya kopyalandı.'); });
+  $('draftText').addEventListener('input', renderParts);
+  $('btnCopyTitle').addEventListener('click', function () { copyDraft('Başlık kopyalandı.', splitDraft($('draftText').value).title); });
+  $('btnCopyBody').addEventListener('click', function () { copyDraft('Açıklama kopyalandı.', splitDraft($('draftText').value).body); });
+  $('btnCopyPrice').addEventListener('click', function () { copyDraft('Fiyat kopyalandı.', state.form ? state.form.price : ''); });
+
+  $('btnRegen').addEventListener('click', function () {
+    if (!state.form || !useOne()) return;
+    state.variant += 1;
+    state.draft = buildListing(state.form, state.variant);
+    renderDraft();
+    notify('Metin yeniden yazıldı.');
+  });
+
+  $('confirmGo').addEventListener('click', function () {
+    var dest = state.pending;
+    confirmModal.hide();
+    if (!dest || dest.id === 'whatsapp') return;
+    if (dest.kind === 'site') {
+      var parts = splitDraft($('draftText').value);
+      copyDraft('Açıklama kopyalandı, ' + dest.name + ' açılıyor.', parts.body || $('draftText').value);
+    } else {
+      copyDraft('Metin kopyalandı, ' + dest.name + ' açılıyor.');
+    }
+  });
+
+  $('btnResetQuota').addEventListener('click', function () {
+    state.used = 0;
+    saveUsed();
+    renderQuota();
+    notify('Sayaç sıfırlandı.');
+  });
+
+  window.addEventListener('hashchange', route);
+  renderDests();
+  renderPhotos();
+  renderQuota();
+  route();
+})();
+</script>
+</body>
+</html>

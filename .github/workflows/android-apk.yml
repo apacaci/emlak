@@ -3,6 +3,9 @@ name: Android APK
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'web/**'
+      - 'README.md'
   workflow_dispatch:
 
 permissions:
