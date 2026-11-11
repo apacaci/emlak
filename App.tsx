@@ -37,10 +37,17 @@ const DESTINATIONS: Destination[] = [
   { id: 'instagram', name: 'Instagram', hint: 'Fotoğraf aktarılır, açıklama panoya kopyalanır', kind: 'social' },
   { id: 'whatsapp', name: 'WhatsApp', hint: 'Kişiye, gruba ya da durumuna gönder', kind: 'social' },
   { id: 'facebook', name: 'Facebook', hint: 'Sayfanda ya da gruplarda paylaş', kind: 'social' },
-  { id: 'sahibinden', name: 'sahibinden.com', hint: 'Metin kopyalanır, site açılır', kind: 'site', url: 'https://www.sahibinden.com' },
-  { id: 'hepsiemlak', name: 'Hepsiemlak', hint: 'Metin kopyalanır, site açılır', kind: 'site', url: 'https://www.hepsiemlak.com' },
-  { id: 'emlakjet', name: 'Emlakjet', hint: 'Metin kopyalanır, site açılır', kind: 'site', url: 'https://www.emlakjet.com' },
+  { id: 'sahibinden', name: 'sahibinden.com', hint: 'Açıklama kopyalanır, site açılır', kind: 'site', url: 'https://www.sahibinden.com' },
+  { id: 'hepsiemlak', name: 'Hepsiemlak', hint: 'Açıklama kopyalanır, site açılır', kind: 'site', url: 'https://www.hepsiemlak.com' },
+  { id: 'emlakjet', name: 'Emlakjet', hint: 'Açıklama kopyalanır, site açılır', kind: 'site', url: 'https://www.emlakjet.com' },
 ];
+
+function splitDraft(text: string): { title: string; body: string } {
+  const lines = text.split('\n');
+  const title = (lines[0] ?? '').trim();
+  const body = lines.slice(1).join('\n').trim();
+  return { title, body };
+}
 
 const MONTHLY_QUOTA = 150;
 const MAX_PHOTOS = 10;
@@ -147,14 +154,22 @@ export default function App() {
     Alert.alert('Kopyalandı', 'Metin panoya kopyalandı.');
   };
 
+  const copyField = async (label: string, value: string) => {
+    await Clipboard.setStringAsync(value);
+    Alert.alert('Kopyalandı', `${label} panoya kopyalandı.`);
+  };
+
+  const parts = splitDraft(draft);
+
   const send = async (dest: Destination) => {
     setPending(null);
     try {
-      await Clipboard.setStringAsync(draft);
       if (dest.kind === 'site' && dest.url) {
+        await Clipboard.setStringAsync(parts.body || draft);
         await Linking.openURL(dest.url);
         return;
       }
+      await Clipboard.setStringAsync(draft);
       if (photos.length > 0 && (await Sharing.isAvailableAsync())) {
         await Sharing.shareAsync(photos[0], { dialogTitle: dest.name + ' ile paylaş' });
       } else {
@@ -281,6 +296,16 @@ export default function App() {
 
               <Text style={s.demoNote}>Deneme sürümü: bu metin yapay zekâdan değil, hazır şablondan üretildi.</Text>
 
+              <View style={s.card}>
+                <Text style={s.cardTitle}>İlan sitesi için alan alan kopyala</Text>
+                <Text style={s.muted}>İlan formundaki her kutuya ayrı ayrı yapıştırabilirsin.</Text>
+                <CopyRow label="Başlık" value={parts.title} onCopy={() => copyField('Başlık', parts.title)} />
+                <CopyRow label="Açıklama" value={parts.body} onCopy={() => copyField('Açıklama', parts.body)} />
+                {form.price.trim().length > 0 && (
+                  <CopyRow label="Fiyat" value={form.price.trim()} onCopy={() => copyField('Fiyat', form.price.trim())} />
+                )}
+              </View>
+
               <PrimaryButton label="Paylaş veya gönder" icon="share-outline" onPress={() => go('share')} />
               <View style={s.row}>
                 <SecondaryButton label="Kopyala" icon="copy-outline" onPress={copyDraft} />
@@ -377,7 +402,7 @@ export default function App() {
               <Text style={s.sheetTitle}>{pending?.name} için gönderilsin mi?</Text>
               <Text style={s.body}>
                 {pending?.kind === 'site'
-                  ? 'Metin panoya kopyalanacak ve site açılacak. İlan formuna yapıştırman yeterli.'
+                  ? 'Açıklama metni panoya kopyalanacak ve site açılacak. Başlık ve fiyat için uygulamaya dönüp taslak ekranındaki kopyala düğmelerini kullanabilirsin.'
                   : photos.length > 0
                     ? 'Kapak fotoğrafı paylaşım menüsüne aktarılacak, metin panoya kopyalanacak. Açıklama alanına yapıştırman yeterli.'
                     : 'Metin paylaşım menüsüne aktarılacak ve panoya kopyalanacak.'}
@@ -489,6 +514,29 @@ function PhotoStrip(props: { photos: string[]; onCamera: () => void; onGallery: 
         </View>
       ))}
     </ScrollView>
+  );
+}
+
+function CopyRow(props: { label: string; value: string; onCopy: () => void }) {
+  return (
+    <View style={s.copyRow}>
+      <View style={s.flex}>
+        <Text style={s.label}>{props.label}</Text>
+        <Text style={s.copyValue} numberOfLines={2}>
+          {props.value || 'Boş'}
+        </Text>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${props.label} kopyala`}
+        disabled={!props.value}
+        onPress={props.onCopy}
+        style={({ pressed }) => [s.copyBtn, pressed && s.pressed, !props.value && s.dim]}
+      >
+        <Ionicons name="copy-outline" size={18} color={C.accent} />
+        <Text style={s.linkText}>Kopyala</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -606,6 +654,9 @@ const s = StyleSheet.create({
   secondary: { height: 48, borderRadius: 14, backgroundColor: C.card, borderWidth: 1, borderColor: C.borderStrong, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontSize: 15, fontWeight: '600', color: C.ink },
   pressed: { opacity: 0.8 },
+  copyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: 1, borderTopColor: C.border, paddingTop: 10 },
+  copyValue: { fontSize: 14, lineHeight: 20, color: C.ink },
+  copyBtn: { minHeight: 44, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: C.accent, flexDirection: 'row', alignItems: 'center', gap: 6 },
   linkBtn: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
   linkText: { fontSize: 14, fontWeight: '600', color: C.accent },
   draftText: { fontSize: 15, lineHeight: 23, color: C.ink },
